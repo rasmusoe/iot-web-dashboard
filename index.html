@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+    /* CSS goes here. */
+    .dashed-line {
+        stroke-width: 3;
+        stroke: #B10000;
+        stroke-linejoin: round;
+        stroke-dasharray: 4;
+        stroke-opacity: 1;
+        animation: dash 1s linear infinite;
+    }
+
+    .subunit.DNK {
+        fill: #34847d;
+        position: absolute;
+    }
+    .subunit.DNB {
+        fill: #34847d;
+        position: absolute;
+    }
+    .subunit.SWE {
+        fill: #d7e4ee;
+        position: absolute;
+    }
+    .subunit.DEU {
+        fill: #d7e4ee;
+        position: absolute;
+    }
+
+    /*.subunit-boundary {
+        fill: none;
+        stroke: #368;
+        stroke-dasharray: 10;
+        stroke-linejoin: round;
+    }*/
+
+    .place-label {
+        fill: #000;
+        fill-opacity: 1;
+        font-size: 20px;
+        font-weight: 300;
+        text-anchor: middle;
+        position: absolute;
+    }
+    text {
+        -webkit-user-select:none;
+        -khtml-user-select:none;
+        -moz-user-select:none;
+        -ms-user-select:none;
+        -o-user-select:none;
+        user-select:none;
+        position: absolute;
+    }
+
+    @keyframes dash {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+</style>
+
+<body>
+
+    <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script src="//d3js.org/topojson.v1.min.js"></script>
+
+    <script>
+        /*  --------- CREATION OF SVG  --------- */
+        // SVG Hight and Width
+        var width = 1100,
+            height = 600;
+
+        // d3 is used to create SVG
+        var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Choose projection and rotate/scale world
+        var projection = d3.geo.albers()
+            .center([24.8, 52.95])
+            .rotate([0, 0, -10])
+            .parallels([50, 60])
+            .scale(10200)
+            .translate([width / 2, height / 2]);
+
+        /* --------- CREATE PATH ---------*/
+        var path = d3.geo.path()
+            .projection(projection);
+
+        // Layering of elements due to d3 not supporting z-index layering
+        var layer1 = svg.append('svg');
+        var layer2 = svg.append('svg');
+
+        /*  --------- CREATION OF ANIMATED DASHED LINES --------- */
+        // Start-End coordinates of dashed lines (LONG,LATI) corresponding to (E,N)
+        var coords_jylland_norge = [[9.031695, 57.138098],[8.041477, 58.146379]];
+        var coords_jylland_sverige = [[10.417415,57.147015],[11.968895,57.704339]];
+        var coords_storebaelt =[[10.379272,55.399767],[11.410810, 55.657214]];
+        var coords_jylland_tyskland =[[9.150874, 54.874238],[9.605146, 54.289313]];
+        var coords_sjaeland_sverige =[[12.612230, 56.035956],[12.721337, 56.055278]];
+        var coords_sjaeland_tyskland =[[11.789062, 55.456724],[12.0068693,54.1474698]];
+        var coords_bornholm_sverige =[[14.716796, 55.219080],[14.219801, 55.450895]];
+        // Dashed lines are appended to Layer2 (in front of layer1 (background) )
+        // Dashed lines are classed as dashed-lines."linename" in CSS
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_jylland_sverige // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48 )
+            .attr("class", "dashed-line jylland_sverige");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_jylland_norge // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line jylland_norge");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_storebaelt // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line storebaelt");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_jylland_tyskland // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line jylland_tyskland");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_sjaeland_sverige // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line sjaeland_sverige");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_sjaeland_tyskland // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line sjaeland_tyskland");
+
+        layer2.append("path")
+            .datum({type: "LineString", coordinates:
+            coords_bornholm_sverige // points in decimal degrees
+            })
+            .attr("d", path)
+            .attr("stroke-dashoffset", 48)
+            .attr("class", "dashed-line bornholm_sverige");
+
+
+        /* --------- CREATE MAP --------- */
+
+        // Get JSON file and create the world on layer1 (Background)
+        d3.json("dk_ger_swe.json", function(error, topo) {
+
+            // VARIABLES
+            var subunits = topojson.feature(topo, topo.objects.subunits);
+            var subunits_features = topojson.feature(topo, topo.objects.subunits).features;
+            var places = topojson.feature(topo, topo.objects.places);
+            var places_features = topojson.feature(topo, topo.objects.places).features;
+
+            // GET ALL SUBUNITS FROM SHAPEFILE AND APPEND TO PATH
+            layer1.selectAll(".subunit")
+                .data(subunits_features)
+                .enter().append("path")
+                .attr("class", function(d) { return "subunit " + d.id; })
+                .attr("d", path);
+
+            // GET PLACES (CITIES) FROM PLACES SHAPEFILE
+            layer1.append("path")
+                .datum(places)
+                .attr("d", path)
+                .attr("class", "place");
+
+            // SHOW PLACES LABELS ON THE MAP
+            layer1.selectAll(".place-label")
+                .data(places_features)
+                .enter().append("text")
+                .attr("class", "place-label")
+                .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
+                .attr("dy", ".35em")
+                .text(function(d) { return d.properties.name; })
+                .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
+                .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })        ;
+
+        });
+
+    </script>
+</body>
