@@ -20,11 +20,11 @@
         position: absolute;
     }
     .subunit.SWE {
-        fill: #d7e4ee;
+        fill: #e9eeee;
         position: absolute;
     }
     .subunit.DEU {
-        fill: #d7e4ee;
+        fill: #e9eeee;
         position: absolute;
     }
 
@@ -59,6 +59,20 @@
         }
     }
 
+    .textbox.rect {
+        fill: #e9eeee;
+        opacity: 0.7;
+        stroke: white;
+        stroke-width: 2.5px ;
+    }
+    .textbox.text {
+        fill: #34847d;
+        font-family: "Trebuchet MS";
+        font-size: 14px;
+        font-weight: bolder;
+    }
+
+
 </style>
 
 <body>
@@ -69,7 +83,7 @@
 
     <script>
         /*  --------- CREATION OF SVG  --------- */
-        // SVG Hight and Width
+        // SVG Height and Width
         var width = 1100,
             height = 600;
 
@@ -93,74 +107,99 @@
         // Layering of elements due to d3 not supporting z-index layering
         var layer1 = svg.append('svg');
         var layer2 = svg.append('svg');
+        var layer3 = svg.append('svg');
+
+
+        /*  --------- COORDINATES FOR THE SVG --------- */
+        var coords = {
+            thorup_strand:[9.092772,57.1380563],
+            kristiansand:[7.8691287,58.1529008],
+            asaa:[10.417415,57.147015],
+            goeteborg:[11.6136556,57.7006826],
+            odense:[10.379272,55.399767],
+            jyderup:[11.410810, 55.657214],
+            rens:[9.150874, 54.874238],
+            rendsburg:[9.5900401,54.2969277],
+            helsingoer: [12.4695691,56.0344453],
+            helsingborg:[12.5912339,56.0349086],
+            ringsted:[11.789062, 55.456724],
+            rostock: [12.0068693,54.1474698],
+            hasle: [14.6718209,55.2079184],
+            borrby: [14.1621923,55.456073]
+        }
+
 
         /*  --------- CREATION OF ANIMATED DASHED LINES --------- */
         // Start-End coordinates of dashed lines (LONG,LATI) corresponding to (E,N)
-        var coords_jylland_norge = [[9.031695, 57.138098],[8.041477, 58.146379]];
-        var coords_jylland_sverige = [[10.417415,57.147015],[11.968895,57.704339]];
-        var coords_storebaelt =[[10.379272,55.399767],[11.410810, 55.657214]];
-        var coords_jylland_tyskland =[[9.150874, 54.874238],[9.605146, 54.289313]];
-        var coords_sjaeland_sverige =[[12.612230, 56.035956],[12.721337, 56.055278]];
-        var coords_sjaeland_tyskland =[[11.789062, 55.456724],[12.0068693,54.1474698]];
-        var coords_bornholm_sverige =[[14.716796, 55.219080],[14.219801, 55.450895]];
+        function dashed_line(start_coord,stop_coord,id){
+            this.ccc = [start_coord, stop_coord];
+            this.id = id;
+        };
+
+        var dashed_lines = [
+            new dashed_line(coords.thorup_strand,coords.kristiansand,"jylland-norge" ),
+            new dashed_line(coords.asaa,coords.goeteborg,"jylland_sverige" ),
+            new dashed_line(coords.rens,coords.rendsburg,"jylland_tyskland" ),
+            new dashed_line(coords.helsingoer,coords.helsingborg,"sjaelland_sverige" ),
+            new dashed_line(coords.ringsted,coords.rostock,"sjaelland_tyskland"),
+            new dashed_line(coords.odense,coords.jyderup,"storebaelt"),
+            new dashed_line(coords.hasle,coords.borrby,"bornholm_sverige")
+        ];
+
         // Dashed lines are appended to Layer2 (in front of layer1 (background) )
         // Dashed lines are classed as dashed-lines."linename" in CSS
-
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_jylland_sverige // points in decimal degrees
+        layer3.selectAll(".dashed-line")
+            .data(dashed_lines)
+            .enter().append("path")
+            .datum( function(d){
+                return {
+                    type: "LineString", coordinates: d.ccc// points in decimal degrees
+                };
             })
             .attr("d", path)
-            .attr("stroke-dashoffset", 48 )
-            .attr("class", "dashed-line jylland_sverige");
+            .attr("class", "dashed-line " + function(d){return d.id})
+            .attr("stroke-dashoffset", 48 );
 
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_jylland_norge // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line jylland_norge");
+        /* ----- CREATE TEXTELEMTNS ----- */
+        function textbox(coord,coord_offset_x,coord_offset_y,width,height,id,text){
+            this.upper_right_coordinates = [coord[0]+coord_offset_x, coord[1]+coord_offset_y ];
+            this.width = width;
+            this.height = height;
+            this.x = projection(this.upper_right_coordinates)[0]-this.width;
+            this.y = projection(this.upper_right_coordinates)[1];
+            this.id = id;
+            this.text = text;
+            this.text_offset = 12;
+            this.text_x = this.x+this.text_offset;
+            this.text_y = this.y+2*this.text_offset;
+        };
 
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_storebaelt // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line storebaelt");
+        var textboxes = [
+            new textbox(coords.thorup_strand,-0.15,0.1,140,65,"jylland-norge","JYLLAND - NORGE"),
+            new textbox(coords.asaa,1.7,0.05,150,50,"jylland-sverige","JYLLAND - SVERIGE"),
+            new textbox(coords.rens,-0.15,0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+            new textbox(coords.helsingoer,1.7,0.2,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+            new textbox(coords.ringsted,1.7,-0.5,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+            new textbox(coords.odense,0.8,-0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+            new textbox(coords.hasle,-0.15,0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+        ];
 
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_jylland_tyskland // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line jylland_tyskland");
+        layer3.selectAll(".textbox.text")
+            .data(textboxes)
+            .enter().append("text")
+            .text(function(d){return d.text})
+            .attr('x', function(d){return d.text_x})
+            .attr('y', function(d){return d.text_y})
+            .attr("class", "textbox text "+function(d){return d.id});
 
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_sjaeland_sverige // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line sjaeland_sverige");
-
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_sjaeland_tyskland // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line sjaeland_tyskland");
-
-        layer2.append("path")
-            .datum({type: "LineString", coordinates:
-            coords_bornholm_sverige // points in decimal degrees
-            })
-            .attr("d", path)
-            .attr("stroke-dashoffset", 48)
-            .attr("class", "dashed-line bornholm_sverige");
+        layer2.selectAll(".textbox.rect")
+            .data(textboxes)
+            .enter().append("rect")
+            .attr('width', function(d){return d.width})
+            .attr('height', function(d){return d.height})
+            .attr('x', function(d){return d.x})
+            .attr('y', function(d){return d.y})
+            .attr("class", "textbox rect "+function(d){return d.id});
 
 
         /* --------- CREATE MAP --------- */
@@ -174,6 +213,7 @@
             var places = topojson.feature(topo, topo.objects.places);
             var places_features = topojson.feature(topo, topo.objects.places).features;
 
+
             // GET ALL SUBUNITS FROM SHAPEFILE AND APPEND TO PATH
             layer1.selectAll(".subunit")
                 .data(subunits_features)
@@ -186,18 +226,6 @@
                 .datum(places)
                 .attr("d", path)
                 .attr("class", "place");
-
-            // SHOW PLACES LABELS ON THE MAP
-            layer1.selectAll(".place-label")
-                .data(places_features)
-                .enter().append("text")
-                .attr("class", "place-label")
-                .attr("transform", function(d) { return "translate(" + projection(d.geometry.coordinates) + ")"; })
-                .attr("dy", ".35em")
-                .text(function(d) { return d.properties.name; })
-                .attr("x", function(d) { return d.geometry.coordinates[0] > -1 ? 6 : -6; })
-                .style("text-anchor", function(d) { return d.geometry.coordinates[0] > -1 ? "start" : "end"; })        ;
-
         });
 
     </script>
