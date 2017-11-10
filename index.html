@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-    /* CSS goes here. */
+    /* --Exchange lines-- */
     .dashed-line {
         stroke-width: 3;
         stroke: #B10000;
@@ -11,6 +11,13 @@
         animation: dash 1s linear infinite;
     }
 
+    @keyframes dash {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    /* --Countries-- */
     .subunit.DNK {
         fill: #34847d;
         position: absolute;
@@ -28,13 +35,7 @@
         position: absolute;
     }
 
-    /*.subunit-boundary {
-        fill: none;
-        stroke: #368;
-        stroke-dasharray: 10;
-        stroke-linejoin: round;
-    }*/
-
+    /* --Cities/Features-- */
     .place-label {
         fill: #000;
         fill-opacity: 1;
@@ -53,12 +54,7 @@
         position: absolute;
     }
 
-    @keyframes dash {
-        to {
-            stroke-dashoffset: 0;
-        }
-    }
-
+    /* --Textbox-- */
     .textbox.rect {
         fill: #e9eeee;
         opacity: 0.7;
@@ -72,10 +68,37 @@
         font-weight: bolder;
     }
 
+    /* --Windmill-- */
+    .windmill_rotor {
+        transform-origin: 50% 50%;
+        transition: 60s;
+        -webkit-animation: rotate 3s linear infinite;
+        animation: rotate 3s linear infinite;
+    }
+    @-webkit-keyframes rotate {
+        100% {
+            -webkit-transform: rotate(360deg);
+        }
+    }
+    @keyframes rotate {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    .windmill_pole {
+        width: 4px;
+        fill: white;
+        stroke: black;
+        stroke-width: 2px;
+        height: 40px;
+    }
+
 
 </style>
 
 <body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
     <script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
 
@@ -108,6 +131,7 @@
         var layer1 = svg.append('svg');
         var layer2 = svg.append('svg');
         var layer3 = svg.append('svg');
+        var layer4 = svg.append('svg');
 
 
         /*  --------- COORDINATES FOR THE SVG --------- */
@@ -125,8 +149,9 @@
             ringsted:[11.789062, 55.456724],
             rostock: [12.0068693,54.1474698],
             hasle: [14.6718209,55.2079184],
-            borrby: [14.1621923,55.456073]
-        }
+            borrby: [14.1621923,55.456073],
+            anholt_windmill_park: [11.174104, 56.597480]
+        };
 
 
         /*  --------- CREATION OF ANIMATED DASHED LINES --------- */
@@ -160,7 +185,8 @@
             .attr("class", "dashed-line " + function(d){return d.id})
             .attr("stroke-dashoffset", 48 );
 
-        /* ----- CREATE TEXTELEMTNS ----- */
+
+        /* ----- CREATE TEXT ELEMENTS ----- */
         function textbox(coord,coord_offset_x,coord_offset_y,width,height,id,text){
             this.upper_right_coordinates = [coord[0]+coord_offset_x, coord[1]+coord_offset_y ];
             this.width = width;
@@ -202,8 +228,35 @@
             .attr("class", "textbox rect "+function(d){return d.id});
 
 
-        /* --------- CREATE MAP --------- */
+        /* ----- ANIMATED WINDMILLS ----- */
+        rotor_height = 75;
+        rotor_width = 75;
+        pole_height = 40;
+        pole_width = 6;
+        windmill_height_offset = 20;
+        windmill_width_offset = 20;
+        layer3.append("image")
+            .attr("height",rotor_height)
+            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(rotor_width/2))
+            .attr("y",projection(coords.anholt_windmill_park)[1]-2*pole_height)
+            .attr("xlink:href","img/windmill_rotor.png")
+            .attr("class","windmill_rotor");
+        layer4.append("image")
+            .attr("height",rotor_height)
+            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(rotor_width/2)-windmill_width_offset)
+            .attr("y",projection(coords.anholt_windmill_park)[1]-2*pole_height-windmill_height_offset)
+            .attr("xlink:href","img/windmill_rotor.png")
+            .attr("class","windmill_rotor");
+        layer2.append("rect")
+            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(pole_width/2))
+            .attr("y",projection(coords.anholt_windmill_park)[1]-pole_height)
+            .attr("class","windmill_pole");
+        layer2.append("rect")
+            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(pole_width/2)-windmill_width_offset)
+            .attr("y",projection(coords.anholt_windmill_park)[1]-pole_height-windmill_height_offset)
+            .attr("class","windmill_pole");
 
+        /* --------- CREATE MAP --------- */
         // Get JSON file and create the world on layer1 (Background)
         d3.json("dk_ger_swe.json", function(error, topo) {
 
