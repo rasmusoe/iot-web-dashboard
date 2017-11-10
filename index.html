@@ -129,6 +129,7 @@
 
         // Layering of elements due to d3 not supporting z-index layering
         var map = svg.append('svg');
+        var solarGroup = svg.append('g').attr('id','solar');
         var windmillGroup = svg.append('g').attr('id','windmills');
         var layer2 = svg.append('svg');
         var layer3 = svg.append('svg');
@@ -152,7 +153,8 @@
             borrby: [14.1621923,55.456073],
             anholt_windmill_park: [11.174104, 56.597480],
             nysted_windmill_park: [11.698845, 54.575794],
-            horns_rev_windmill_park : [7.859741, 55.560579]
+            horns_rev_windmill_park : [7.859741, 55.560579],
+            silkeborg_solar_farm: [9.537419, 56.206914]
         };
 
 
@@ -248,17 +250,30 @@
                 .attr("class","windmill_rotor");
         }
 
-        function windmillpark(svgGroup, coord, rotorWidth, rotorHeight, poleWidth, poleHeight, id) {
+        function windmillPark(svgGroup, coord, rotorWidth, rotorHeight, poleWidth, poleHeight, id) {
             windmillParkWidthOffset = 20;
             windmillParkHeightOffset = 20;
             windmill(svgGroup, coord,rotorWidth,rotorHeight,poleWidth,poleHeight,windmillParkWidthOffset,windmillParkHeightOffset,id);
             windmill(svgGroup, coord,rotorWidth,rotorHeight,poleWidth,poleHeight,0,0,id);
         }
 
-        windmillpark(windmillGroup, coords.anholt_windmill_park,75,75,6,40,0,0,'windmill');
+        windmillPark(windmillGroup, coords.anholt_windmill_park,75,75,6,40,0,0,'windmill');
         windmill(windmillGroup, coords.nysted_windmill_park,75,75,6,40,0,0,'windmill');
-        windmillpark(windmillGroup, coords.horns_rev_windmill_park,75,75,6,40,0,0,'windmill');
+        windmillPark(windmillGroup, coords.horns_rev_windmill_park,75,75,6,40,0,0,'windmill');
 
+        /* ----- SOLAR PANELS ----- */
+        function solarPanel(svgGroup, coord, width, height, id){
+            projectedCoords = projection(coord);
+
+            svgGroup.append("image")
+                .attr("height",height)
+                .attr("x",projectedCoords[0]-Math.round(width/2))
+                .attr("y",projectedCoords[1]-Math.round(height/2))
+                .attr("xlink:href","img/solar_panel.png")
+                .attr("id",id)
+        }
+
+        solarPanel(solarGroup, coords.silkeborg_solar_farm,60,60,'solar');
         
         /* --------- CREATE MAP --------- */
         // Get JSON file and create the world on layer1 (Background)
