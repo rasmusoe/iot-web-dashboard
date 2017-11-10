@@ -128,10 +128,10 @@
             .projection(projection);
 
         // Layering of elements due to d3 not supporting z-index layering
-        var layer1 = svg.append('svg');
+        var map = svg.append('svg');
+        var windmillGroup = svg.append('g').attr('id','windmills');
         var layer2 = svg.append('svg');
         var layer3 = svg.append('svg');
-        var layer4 = svg.append('svg');
 
 
         /*  --------- COORDINATES FOR THE SVG --------- */
@@ -150,7 +150,9 @@
             rostock: [12.0068693,54.1474698],
             hasle: [14.6718209,55.2079184],
             borrby: [14.1621923,55.456073],
-            anholt_windmill_park: [11.174104, 56.597480]
+            anholt_windmill_park: [11.174104, 56.597480],
+            nysted_windmill_park: [11.698845, 54.575794],
+            horns_rev_windmill_park : [7.859741, 55.560579]
         };
 
 
@@ -229,33 +231,35 @@
 
 
         /* ----- ANIMATED WINDMILLS ----- */
-        rotor_height = 75;
-        rotor_width = 75;
-        pole_height = 40;
-        pole_width = 6;
-        windmill_height_offset = 20;
-        windmill_width_offset = 20;
-        layer3.append("image")
-            .attr("height",rotor_height)
-            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(rotor_width/2))
-            .attr("y",projection(coords.anholt_windmill_park)[1]-2*pole_height)
-            .attr("xlink:href","img/windmill_rotor.png")
-            .attr("class","windmill_rotor");
-        layer4.append("image")
-            .attr("height",rotor_height)
-            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(rotor_width/2)-windmill_width_offset)
-            .attr("y",projection(coords.anholt_windmill_park)[1]-2*pole_height-windmill_height_offset)
-            .attr("xlink:href","img/windmill_rotor.png")
-            .attr("class","windmill_rotor");
-        layer2.append("rect")
-            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(pole_width/2))
-            .attr("y",projection(coords.anholt_windmill_park)[1]-pole_height)
-            .attr("class","windmill_pole");
-        layer2.append("rect")
-            .attr("x",projection(coords.anholt_windmill_park)[0]-Math.round(pole_width/2)-windmill_width_offset)
-            .attr("y",projection(coords.anholt_windmill_park)[1]-pole_height-windmill_height_offset)
-            .attr("class","windmill_pole");
+        function windmill(svgGroup, coord, rotorWidth, rotorHeight, poleWidth, poleHeight, offsetWidth, offsetHeight, id){
+            projectedCoords = projection(coord);
+            svgGroup.append("rect")
+                .attr("x",projectedCoords[0]-Math.round(poleWidth/2)-offsetWidth)
+                .attr("y",projectedCoords[1]-poleHeight-offsetHeight)
+                .attr("id",id)
+                .attr("class","windmill_pole");
 
+            svgGroup.append("image")
+                .attr("height",rotorHeight)
+                .attr("x",projectedCoords[0]-Math.round(rotorWidth/2)-offsetWidth)
+                .attr("y",projectedCoords[1]-2*poleHeight-offsetHeight)
+                .attr("xlink:href","img/windmill_rotor.png")
+                .attr("id",id)
+                .attr("class","windmill_rotor");
+        }
+
+        function windmillpark(svgGroup, coord, rotorWidth, rotorHeight, poleWidth, poleHeight, id) {
+            windmillParkWidthOffset = 20;
+            windmillParkHeightOffset = 20;
+            windmill(svgGroup, coord,rotorWidth,rotorHeight,poleWidth,poleHeight,windmillParkWidthOffset,windmillParkHeightOffset,id);
+            windmill(svgGroup, coord,rotorWidth,rotorHeight,poleWidth,poleHeight,0,0,id);
+        }
+
+        windmillpark(windmillGroup, coords.anholt_windmill_park,75,75,6,40,0,0,'windmill');
+        windmill(windmillGroup, coords.nysted_windmill_park,75,75,6,40,0,0,'windmill');
+        windmillpark(windmillGroup, coords.horns_rev_windmill_park,75,75,6,40,0,0,'windmill');
+
+        
         /* --------- CREATE MAP --------- */
         // Get JSON file and create the world on layer1 (Background)
         d3.json("dk_ger_swe.json", function(error, topo) {
@@ -268,14 +272,14 @@
 
 
             // GET ALL SUBUNITS FROM SHAPEFILE AND APPEND TO PATH
-            layer1.selectAll(".subunit")
+            map.selectAll(".subunit")
                 .data(subunits_features)
                 .enter().append("path")
                 .attr("class", function(d) { return "subunit " + d.id; })
                 .attr("d", path);
 
             // GET PLACES (CITIES) FROM PLACES SHAPEFILE
-            layer1.append("path")
+            map.append("path")
                 .datum(places)
                 .attr("d", path)
                 .attr("class", "place");
