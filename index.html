@@ -62,10 +62,13 @@
         stroke-width: 2.5px ;
     }
     .textbox.text {
+        font-weight: bolder;
+    }
+
+    .textbox {
         fill: #34847d;
         font-family: "Trebuchet MS";
-        font-size: 14px;
-        font-weight: bolder;
+        font-size: 12px;
     }
 
     /* --Windmill-- */
@@ -96,7 +99,9 @@
 
 </style>
 
+
 <body>
+    <script src="http://mbostock.github.com/d3/d3.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 
@@ -104,7 +109,11 @@
 
     <script src="//d3js.org/topojson.v1.min.js"></script>
 
+    <script src="gauge.js"></script>
+
     <script>
+
+        var dataFetchInterval_ms = 2000;
         /*  --------- CREATION OF SVG  --------- */
         // SVG Height and Width
         var width = 1100,
@@ -123,18 +132,6 @@
             .scale(10200)
             .translate([width / 2, height / 2]);
 
-        /* --------- CREATE PATH ---------*/
-        var path = d3.geo.path()
-            .projection(projection);
-
-        // Layering of elements due to d3 not supporting z-index layering
-        var map = svg.append('svg');
-        var solarGroup = svg.append('g').attr('id','solar');
-        var windmillGroup = svg.append('g').attr('id','windmills');
-        var layer2 = svg.append('svg');
-        var layer3 = svg.append('svg');
-
-
         /*  --------- COORDINATES FOR THE SVG --------- */
         var coords = {
             thorup_strand:[9.092772,57.1380563],
@@ -145,8 +142,8 @@
             jyderup:[11.410810, 55.657214],
             rens:[9.150874, 54.874238],
             rendsburg:[9.5900401,54.2969277],
-            helsingoer: [12.4695691,56.0344453],
-            helsingborg:[12.5912339,56.0349086],
+            helsingoer: [12.593724,56.035637],
+            helsingborg:[12.719173,56.061975],
             ringsted:[11.789062, 55.456724],
             rostock: [12.0068693,54.1474698],
             hasle: [14.6718209,55.2079184],
@@ -154,83 +151,146 @@
             anholt_windmill_park: [11.174104, 56.597480],
             nysted_windmill_park: [11.698845, 54.575794],
             horns_rev_windmill_park : [7.859741, 55.560579],
-            silkeborg_solar_farm: [9.537419, 56.206914]
+            silkeborg_solar_farm: [9.537419, 56.206914],
+            gaugePlacement: [13.756697,57.270417]
         };
 
+        /* --------- CREATE PATH ---------*/
+        var path = d3.geo.path()
+            .projection(projection);
 
-        /*  --------- CREATION OF ANIMATED DASHED LINES --------- */
-        // Start-End coordinates of dashed lines (LONG,LATI) corresponding to (E,N)
-        function dashed_line(start_coord,stop_coord,id){
-            this.ccc = [start_coord, stop_coord];
-            this.id = id;
-        };
-
-        var dashed_lines = [
-            new dashed_line(coords.thorup_strand,coords.kristiansand,"jylland-norge" ),
-            new dashed_line(coords.asaa,coords.goeteborg,"jylland_sverige" ),
-            new dashed_line(coords.rens,coords.rendsburg,"jylland_tyskland" ),
-            new dashed_line(coords.helsingoer,coords.helsingborg,"sjaelland_sverige" ),
-            new dashed_line(coords.ringsted,coords.rostock,"sjaelland_tyskland"),
-            new dashed_line(coords.odense,coords.jyderup,"storebaelt"),
-            new dashed_line(coords.hasle,coords.borrby,"bornholm_sverige")
-        ];
-
-        // Dashed lines are appended to Layer2 (in front of layer1 (background) )
-        // Dashed lines are classed as dashed-lines."linename" in CSS
-        layer3.selectAll(".dashed-line")
-            .data(dashed_lines)
-            .enter().append("path")
-            .datum( function(d){
-                return {
-                    type: "LineString", coordinates: d.ccc// points in decimal degrees
-                };
-            })
-            .attr("d", path)
-            .attr("class", "dashed-line " + function(d){return d.id})
-            .attr("stroke-dashoffset", 48 );
+        // Layering of elements due to d3 not supporting z-index layering
+        var map = svg.append('svg');
+        var dashedLineGroup = svg.append('g').attr('id','dashedLine');
+        var solarGroup = svg.append('g').attr('id','solar');
+        var windmillGroup = svg.append('g').attr('id','windmills');
+        var textboxRectGroup = svg.append('g').attr("id","textboxRect");
+        var textboxTextGroup = svg.append('g').attr("id","textboxText");
+        var gaugeGroup = svg.append('g').attr("id","gauges");
 
 
-        /* ----- CREATE TEXT ELEMENTS ----- */
-        function textbox(coord,coord_offset_x,coord_offset_y,width,height,id,text){
+         /* ----- CREATE ENERGY LINES ----- */
+
+        function energyLine(coord,coord_offset_x,coord_offset_y,width,height,dashed_line_coords,id,text,value){
             this.upper_right_coordinates = [coord[0]+coord_offset_x, coord[1]+coord_offset_y ];
-            this.width = width;
-            this.height = height;
-            this.x = projection(this.upper_right_coordinates)[0]-this.width;
+            this.x = projection(this.upper_right_coordinates)[0];
             this.y = projection(this.upper_right_coordinates)[1];
             this.id = id;
             this.text = text;
-            this.text_offset = 12;
-            this.text_x = this.x+this.text_offset;
-            this.text_y = this.y+2*this.text_offset;
+            this.dashed_line_coords = dashed_line_coords;
+
+            // SET UP DASHED LINE
+            dashedLineGroup.append("path")
+                .datum({
+                    type: "LineString", coordinates: this.dashed_line_coords.coord // points in decimal degrees
+                })
+                .attr("d", path)
+                .attr("class", "dashed-line " + this.id)
+                .attr("stroke-dashoffset", dashOffset );
+
+            // SET UP TEXT ELEMENT WITH CHOSEN SIZE (CSS)
+            this.textElement = textboxTextGroup.append("text")
+                .text(this.text)
+                .attr("class", "textbox text "+this.id)
+                .attr("id",this.id);
+
+            // PLACE TEXT ELEMENT BASED ON LENFTH AND SIZE
+            this.x -= this.textElement.node().getBBox().width;
+            this.textElement
+                .attr('y', this.y)
+                .attr('x', this.x);
+
+
+            // SET UP VALUE TEXT FILED
+            this.distanceBetweenTexts = 0.2 * this.textElement.node().getBBox().height;
+            this.valueElement = textboxTextGroup.append("text")
+                .text(this.text)
+                .attr('x', this.x)
+                .attr('y', this.y + this.distanceBetweenTexts + this.textElement.node().getBBox().height)
+                .attr("class", "textbox value "+this.id)
+                .attr("id",this.id + " Value");
+
+            // SET UP RECTANGLE BOX BEHIND TEXT
+            this.rect_offset = this.textElement.node().getBBox().height;
+            this.offset_factor = 2;
+
+            this.rectElement = textboxRectGroup.append("rect")
+                .attr('width', this.textElement.node().getBBox().width + this.offset_factor * this.rect_offset)
+                .attr('height', this.textElement.node().getBBox().height  + this.valueElement.node().getBBox().height + this.distanceBetweenTexts + this.rect_offset )
+
+            this.rectElement
+                .attr('x', this.x - this.rect_offset )
+                .attr('y', this.y - this.textElement.node().getBBox().height + this.distanceBetweenTexts - this.rect_offset/2 )
+                .attr("class", "textbox rect "+this.id)
+                .attr("id",this.id);
+
+            // FUNCTION TO UPDATE VALUE IN TEXTBOX AND CHANGE DIRECTION OF DASHED LINE BASED ON VALUE
+            this.updateValue = function(value)
+            {
+                if(value < 0){
+                    value = "IMPORT: " +value.slice(0) + " MW";
+                    dashedLineGroup.select(".dashed-line."+this.id)
+                        .attr("stroke-dashoffset", -dashOffset );
+                }
+                else{
+                    value = "EXPORT: " +value + " MW";
+                    dashedLineGroup.select(".dashed-line."+this.id)
+                        .attr("stroke-dashoffset", dashOffset );
+                }
+
+                this.valueElement
+                    .text(value)
+                    .attr("x",this.x + this.textElement.node().getComputedTextLength() / 2 -this.valueElement.node().getComputedTextLength() / 2 );
+            }
+
+            // FORCE CONSTRUCTION OF ELEMENT TO UPDATE VALUE
+            this.updateValue(value);
         };
 
-        var textboxes = [
-            new textbox(coords.thorup_strand,-0.15,0.1,140,65,"jylland-norge","JYLLAND - NORGE"),
-            new textbox(coords.asaa,1.7,0.05,150,50,"jylland-sverige","JYLLAND - SVERIGE"),
-            new textbox(coords.rens,-0.15,0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
-            new textbox(coords.helsingoer,1.7,0.2,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
-            new textbox(coords.ringsted,1.7,-0.5,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
-            new textbox(coords.odense,0.8,-0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
-            new textbox(coords.hasle,-0.15,0.1,150,50,"jylland-tyskland","JYLLAND - TYSKLAND"),
+        // Start-End coordinates of dashed lines (LONG,LATI) corresponding to (E,N)
+        function dashed_line(start_coord,stop_coord,id){
+            this.coord = [start_coord, stop_coord];
+        };
+        // Creation of object with all dashed line coords
+        var dashed_lines = [
+            new dashed_line(coords.thorup_strand,coords.kristiansand),
+            new dashed_line(coords.asaa,coords.goeteborg),
+            new dashed_line(coords.rens,coords.rendsburg),
+            new dashed_line(coords.helsingoer,coords.helsingborg),
+            new dashed_line(coords.ringsted,coords.rostock),
+            new dashed_line(coords.odense,coords.jyderup),
+            new dashed_line(coords.hasle,coords.borrby)
+        ];
+        // Dashed line offset controls animation
+        var dashOffset = 48;
+
+        // Creation of energy lines. Dashed-lines and Textboxes will be created
+        var energyLines = [
+            new energyLine(coords.thorup_strand,-0.15,0.1,140,65,dashed_lines[0],"jylland-norge","JYLLAND - NORGE",10),
+            new energyLine(coords.asaa,1.7,0.05,150,50,dashed_lines[1],"jylland-sverige","JYLLAND - SVERIGE",10),
+            new energyLine(coords.rens,-0.15,0.1,150,50,dashed_lines[2],"jylland-tyskland","JYLLAND - TYSKLAND",10),
+            new energyLine(coords.helsingoer,1.7,0.2,150,50,dashed_lines[3],"sjaelland-sverige","SJÆLLAND - SVERIGE",10),
+            new energyLine(coords.ringsted,1.7,-0.5,150,50,dashed_lines[4],"sjaelland-tyskland","SJÆLLAND - TYSKLAND",10),
+            new energyLine(coords.odense,0.8,-0.1,150,50,dashed_lines[5],"storebaelt","STOREBÆLT",10),
+            new energyLine(coords.hasle,-0.15,0.1,150,50,dashed_lines[6],"bornholm-sverige","BORNHOLM - SVERIGE",10),
         ];
 
-        layer3.selectAll(".textbox.text")
-            .data(textboxes)
-            .enter().append("text")
-            .text(function(d){return d.text})
-            .attr('x', function(d){return d.text_x})
-            .attr('y', function(d){return d.text_y})
-            .attr("class", "textbox text "+function(d){return d.id});
-
-        layer2.selectAll(".textbox.rect")
-            .data(textboxes)
-            .enter().append("rect")
-            .attr('width', function(d){return d.width})
-            .attr('height', function(d){return d.height})
-            .attr('x', function(d){return d.x})
-            .attr('y', function(d){return d.y})
-            .attr("class", "textbox rect "+function(d){return d.id});
-
+        // Update Energy lines values
+        // Function to update gauge vaule
+        function arrayHasOwnIndex(array, prop) {
+            return array.hasOwnProperty(prop) && /^0$|^[1-9]\d*$/.test(prop) && prop <= 4294967294; // 2^32 - 2
+        }
+        function updateEnergyLines() {
+            energyLines.forEach( function (arrayItem)
+            {
+                // INSERT FETCH OF ENERGY DATA HERE
+                var overflow = 0; //10;
+                var value = 0 - overflow + (200 - 0 + overflow * 2) * Math.random() - 100;
+                arrayItem.updateValue(String(Math.round(value)));
+            });
+        }
+        // Make gauge value be updated every 5000 ms
+        setInterval(updateEnergyLines, dataFetchInterval_ms);
 
         /* ----- ANIMATED WINDMILLS ----- */
         function windmill(svgGroup, coord, rotorWidth, rotorHeight, poleWidth, poleHeight, offsetWidth, offsetHeight, id){
@@ -274,7 +334,27 @@
         }
 
         solarPanel(solarGroup, coords.silkeborg_solar_farm,60,60,'solar');
-        
+
+        /* -------- CREATE GAUGE -------- */
+        // Create Gauge
+        var gauge = createGauge( "CO2",gaugeGroup,120,"CO2",100,200,5);
+
+        // Placment of gauge on the map
+        var gaugePlacement = ' translate(' + projection(coords.gaugePlacement) + ')';
+        gaugeGroup
+            .attr('transform', gaugePlacement);
+
+        // Function to update gauge vaule
+        function updateGauge()
+        {
+            // INSERT FETCH OF CO2 DATA HERE
+            var value = gauge.getRandomValue();
+            gauge.redraw(value);
+        }
+
+        // Make gauge value be updated every 1000 ms
+        setInterval(updateGauge, dataFetchInterval_ms);
+
         /* --------- CREATE MAP --------- */
         // Get JSON file and create the world on layer1 (Background)
         d3.json("dk_ger_swe.json", function(error, topo) {
