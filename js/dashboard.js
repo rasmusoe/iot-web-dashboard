@@ -1,12 +1,11 @@
 $(document).ready(function () {
-    console.log("ready")
     // d3 is used to create SVG
     var svg = d3.select("#map").append("svg")
         .attr("width", width)
         .attr("height", height);
 
     // Layering of elements due to d3 not supporting z-index layering
-    var map = svg.append('svg');
+    var map = svg.append('svg').attr('id','map');
     var dashedLineGroup = svg.append('g').attr('id','dashedLine');
     var solarGroup = svg.append('g').attr('id','solar');
     var windmillGroup = svg.append('g').attr('id','windmills');
@@ -20,10 +19,86 @@ $(document).ready(function () {
     create_solar_panels(solarGroup, coords);
     create_gauge(gaugeGroup, coords,dataFetchInterval_ms);
 
-    // TEMP
+    // google charts for generating timeline charts
     google.charts.load("current", {packages: ['annotatedtimeline']});
     google.charts.setOnLoadCallback(function() {drawChart()});
+
+    $("#gauges").on('click',function () {
+        $("#co2_card")[0].scrollIntoView();
+    });
+
+    $("#gauges").on('mouseover', function () {
+        fade_out(this)
+    });
+
+    $("#gauges").on('mouseout', function () {
+        fade_in();
+    });
+
+    $("#solar").on('click',function () {
+        $("#energy_prod_card")[0].scrollIntoView();
+    });
+
+    $("#windmills").on('click',function () {
+        $("#energy_prod_card")[0].scrollIntoView();
+    });
+
+    $("#solar, #gauges, #windmills").on('mouseover',function () {
+        fade_out(this)
+    });
+
+    $("#solar, #gauges, #windmills").on('mouseout',function () {
+        fade_in();
+    });
+
+    $("#textboxText").on('click',function () {
+        $("#energy_trans_card")[0].scrollIntoView();
+    });
+
+    $("#textboxRect").on('click',function () {
+        $("#energy_trans_card")[0].scrollIntoView();
+    });
+
+    $("#dashedLine").on('click',function () {
+        $("#energy_trans_card")[0].scrollIntoView();
+    });
+
+    $("#textboxText, #textboxRect, #dashedLine").on('mouseover',function () {
+        fade_out(["#textboxText","#textboxRect","#dashedLine"])
+    });
+
+    $("#textboxText, #textboxRect, #dashedLine").on('mouseout',function () {
+        fade_in();
+    });
 });
+
+function fade_out(id) {
+    $('.subunit').attr('opacity',0.4);
+    $('#windmills').attr('opacity',0.4);
+    $('#solar').attr('opacity',0.4);
+    $('#textboxRect').attr('opacity',0.4);
+    $('#textboxText').attr('opacity',0.4);
+    $('#dashedLine').attr('opacity',0.4);
+    $('#gauges').attr('opacity',0.4);
+
+    if(id instanceof Array) {
+        id.forEach(function (entry) {
+            $(entry).attr('opacity', 1);
+        });
+    } else {
+        $(id).attr('opacity', 1);
+    }
+}
+
+function fade_in() {
+    $('.subunit').attr('opacity',1);
+    $('#windmills').attr('opacity',1);
+    $('#solar').attr('opacity',1);
+    $('#textboxRect').attr('opacity',1);
+    $('#textboxText').attr('opacity',1);
+    $('#dashedLine').attr('opacity',1);
+    $('#gauges').attr('opacity',1);
+}
 
 /*  --------- CREATION OF SVG  --------- */
 // SVG Height and Width
