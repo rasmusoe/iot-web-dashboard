@@ -1,7 +1,7 @@
 $(document).ready(function () {
-
+    console.log("ready")
     // d3 is used to create SVG
-    var svg = d3.select("body").append("svg")
+    var svg = d3.select("#map").append("svg")
         .attr("width", width)
         .attr("height", height);
 
@@ -19,6 +19,10 @@ $(document).ready(function () {
     create_windmills(windmillGroup, coords);
     create_solar_panels(solarGroup, coords);
     create_gauge(gaugeGroup, coords,dataFetchInterval_ms);
+
+    // TEMP
+    google.charts.load("current", {packages: ['annotatedtimeline']});
+    google.charts.setOnLoadCallback(function() {drawChart()});
 });
 
 /*  --------- CREATION OF SVG  --------- */
