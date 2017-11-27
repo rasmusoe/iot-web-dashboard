@@ -24,7 +24,7 @@ function Gauge(placeholder, configuration)
         this.config.redColor 	= configuration.redColor || "#DC3912";
 
         this.config.transitionDuration = configuration.transitionDuration || 500;
-    }
+    };
 
     this.render = function()
     {
@@ -161,7 +161,7 @@ function Gauge(placeholder, configuration)
             .style("stroke-width", "0px");
 
         this.redraw(this.config.min, 0);
-    }
+    };
 
     this.buildPointerPath = function(value)
     {
@@ -185,7 +185,7 @@ function Gauge(placeholder, configuration)
             point.y -= self.config.cy;
             return point;
         }
-    }
+    };
 
     this.drawBand = function(start, end, color)
     {
@@ -199,7 +199,7 @@ function Gauge(placeholder, configuration)
                 .innerRadius(0.65 * this.config.raduis)
                 .outerRadius(0.85 * this.config.raduis))
             .attr("transform", function() { return "translate(" + self.config.cx + ", " + self.config.cy + ") rotate(270)" });
-    }
+    };
 
     this.redraw = function(value, transitionDuration)
     {
@@ -228,25 +228,25 @@ function Gauge(placeholder, configuration)
                     return "translate(" + self.config.cx + ", " + self.config.cy + ") rotate(" + rotation + ")";
                 }
             });
-    }
+    };
 
     this.valueToDegrees = function(value)
     {
         // thanks @closealert
         //return value / this.config.range * 270 - 45;
         return value / this.config.range * 270 - (this.config.min / this.config.range * 270 + 45);
-    }
+    };
 
     this.valueToRadians = function(value)
     {
         return this.valueToDegrees(value) * Math.PI / 180;
-    }
+    };
 
     this.valueToPoint = function(value, factor)
     {
         return { 	x: this.config.cx - this.config.raduis * factor * Math.cos(this.valueToRadians(value)),
             y: this.config.cy - this.config.raduis * factor * Math.sin(this.valueToRadians(value)) 		};
-    }
+    };
 
     // initialization
     this.configure(configuration);
@@ -271,7 +271,7 @@ var createGauge = function(name, gaugeGroup, size, label, min, max, minorTicks)
 
     gauge.render();
     return gauge;
-}
+};
 
 var gaugeConfig = function(size,label,min,max,minorTicks)
 {
@@ -280,4 +280,25 @@ var gaugeConfig = function(size,label,min,max,minorTicks)
     this.min = min;
     this.max = max;
     this.minorTicks = minorTicks;
+};
+
+// Function to update gauge vaule
+function updateGauge(gauge) {
+    // INSERT FETCH OF CO2 DATA HERE
+    var value = gauge.getRandomValue();
+    gauge.redraw(value);
+}
+
+/* -------- CREATE GAUGE -------- */
+function create_gauge(layer, coords, dataFetchInterval_ms) {
+    // Create Gauge
+    var gauge = createGauge("CO2", layer, 120, "CO2", 100, 200, 5);
+
+    // Placment of gauge on the map
+    var gaugePlacement = ' translate(' + projection(coords.gaugePlacement) + ')';
+    layer
+        .attr('transform', gaugePlacement);
+
+    // Make gauge value be updated every 1000 ms
+    setInterval(function(){updateGauge(gauge)}, dataFetchInterval_ms);
 }

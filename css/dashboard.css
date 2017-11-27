@@ -1,0 +1,94 @@
+/* --Exchange lines-- */
+.dashed-line {
+    stroke-width: 3;
+    stroke: #B10000;
+    stroke-linejoin: round;
+    stroke-dasharray: 4;
+    stroke-opacity: 1;
+    animation: dash 1s linear infinite;
+}
+
+@keyframes dash {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* --Countries-- */
+.subunit.DNK {
+    fill: #34847d;
+    position: absolute;
+}
+.subunit.DNB {
+    fill: #34847d;
+    position: absolute;
+}
+.subunit.SWE {
+    fill: #e9eeee;
+    position: absolute;
+}
+.subunit.DEU {
+    fill: #e9eeee;
+    position: absolute;
+}
+
+/* --Cities/Features-- */
+.place-label {
+    fill: #000;
+    fill-opacity: 1;
+    font-size: 20px;
+    font-weight: 300;
+    text-anchor: middle;
+    position: absolute;
+}
+text {
+    -webkit-user-select:none;
+    -khtml-user-select:none;
+    -moz-user-select:none;
+    -ms-user-select:none;
+    -o-user-select:none;
+    user-select:none;
+    position: absolute;
+}
+
+/* --Textbox-- */
+.textbox.rect {
+    fill: #e9eeee;
+    opacity: 0.7;
+    stroke: white;
+    stroke-width: 2.5px ;
+}
+.textbox.text {
+    font-weight: bolder;
+}
+
+.textbox {
+    fill: #34847d;
+    font-family: "Trebuchet MS";
+    font-size: 12px;
+}
+
+/* --Windmill-- */
+.windmill_rotor {
+    transform-origin: 50% 50%;
+    transition: 60s;
+    -webkit-animation: rotate 3s linear infinite;
+    animation: rotate 3s linear infinite;
+}
+@-webkit-keyframes rotate {
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+.windmill_pole {
+    width: 4px;
+    fill: white;
+    stroke: black;
+    stroke-width: 2px;
+    height: 40px;
+}
