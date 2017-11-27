@@ -17,11 +17,5 @@ function create_map(layer, path) {
                 return "subunit " + d.id;
             })
             .attr("d", path);
-
-        // GET PLACES (CITIES) FROM PLACES SHAPEFILE
-        layer.append("path")
-            .datum(places)
-            .attr("d", path)
-            .attr("class", "place");
     });
 }
