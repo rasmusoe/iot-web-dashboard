@@ -50,9 +50,20 @@ $(document).ready(function () {
         fade_out(["#textboxText","#textboxRect","#dashedLine"])
     });
 	
-	// fade in all
+	// fade in all and remove all data highlight
     $("#solar, #gauges, #windmills, #power, #textboxText, #textboxRect, #dashedLine").on('mouseout',function () {
         fade_in();
+        $('.power_prod_data').show();
+        $('.wind_power_data').show();
+    });
+
+    // filter recent data table
+    $("#power").on('mouseover',function () {
+        $('.wind_power_data').hide();
+    });
+
+    $("#windmills").on('mouseover',function () {
+        $('.power_prod_data').hide();
     });
 
 });
