@@ -70,7 +70,7 @@ text {
 
 /* --Windmill-- */
 .windmill_rotor {
-    transform-origin: 50% 50%;
+    transform-origin: center center;
     transition: 60s;
     -webkit-animation: rotate 3s linear infinite;
     animation: rotate 3s linear infinite;
