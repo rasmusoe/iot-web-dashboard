@@ -9,6 +9,7 @@ $(document).ready(function () {
     var dashedLineGroup = svg.append('g').attr('id','dashedLine');
     var solarGroup = svg.append('g').attr('id','solar');
     var windmillGroup = svg.append('g').attr('id','windmills');
+	var powerGroup = svg.append('g').attr('id','power')
     var textboxRectGroup = svg.append('g').attr("id","textboxRect");
     var textboxTextGroup = svg.append('g').attr("id","textboxText");
     var gaugeGroup = svg.append('g').attr("id","gauges");
@@ -18,64 +19,60 @@ $(document).ready(function () {
     create_windmills(windmillGroup, coords);
     create_solar_panels(solarGroup, coords);
     create_gauge(gaugeGroup, coords,dataFetchInterval_ms);
+	create_power_plants(powerGroup, coords);
 
     // google charts for generating timeline charts
     google.charts.load("current", {packages: ['annotatedtimeline']});
     google.charts.setOnLoadCallback(function() {drawChart()});
 
+	// scroll to co2 chart
     $("#gauges").on('click',function () {
         $("#co2_card")[0].scrollIntoView();
     });
-
-    $("#gauges").on('mouseover', function () {
-        fade_out(this)
-    });
-
-    $("#gauges").on('mouseout', function () {
-        fade_in();
-    });
-
-    $("#solar").on('click',function () {
+	
+	// scroll to energy production card
+	$("#solar, #power, #windmills").on('click',function () {
         $("#energy_prod_card")[0].scrollIntoView();
     });
-
-    $("#windmills").on('click',function () {
-        $("#energy_prod_card")[0].scrollIntoView();
+	
+	// scroll to energy transmission card
+    $("#textboxText, #textboxRect, #dashedLine").on('click',function () {
+        $("#energy_trans_card")[0].scrollIntoView();
     });
 
-    $("#solar, #gauges, #windmills").on('mouseover',function () {
+	// fade out all but self
+    $("#solar, #gauges, #windmills, #power").on('mouseover',function () {
         fade_out(this)
     });
-
-    $("#solar, #gauges, #windmills").on('mouseout',function () {
-        fade_in();
-    });
-
-    $("#textboxText").on('click',function () {
-        $("#energy_trans_card")[0].scrollIntoView();
-    });
-
-    $("#textboxRect").on('click',function () {
-        $("#energy_trans_card")[0].scrollIntoView();
-    });
-
-    $("#dashedLine").on('click',function () {
-        $("#energy_trans_card")[0].scrollIntoView();
-    });
-
+	
+	// fade out all but group
     $("#textboxText, #textboxRect, #dashedLine").on('mouseover',function () {
         fade_out(["#textboxText","#textboxRect","#dashedLine"])
     });
-
-    $("#textboxText, #textboxRect, #dashedLine").on('mouseout',function () {
+	
+	// fade in all and remove all data highlight
+    $("#solar, #gauges, #windmills, #power, #textboxText, #textboxRect, #dashedLine").on('mouseout',function () {
         fade_in();
+        $('.power_prod_data').show();
+        $('.wind_power_data').show();
     });
+
+    // filter recent data table
+    $("#power").on('mouseover',function () {
+        $('.wind_power_data').hide();
+    });
+
+    $("#windmills").on('mouseover',function () {
+        $('.power_prod_data').hide();
+    });
+
 });
 
 function fade_out(id) {
     $('.subunit').attr('opacity',0.4);
     $('#windmills').attr('opacity',0.4);
     $('#solar').attr('opacity',0.4);
+	$('#power').attr('opacity',0.4);
     $('#textboxRect').attr('opacity',0.4);
     $('#textboxText').attr('opacity',0.4);
     $('#dashedLine').attr('opacity',0.4);
@@ -94,6 +91,7 @@ function fade_in() {
     $('.subunit').attr('opacity',1);
     $('#windmills').attr('opacity',1);
     $('#solar').attr('opacity',1);
+	$('#power').attr('opacity',1);
     $('#textboxRect').attr('opacity',1);
     $('#textboxText').attr('opacity',1);
     $('#dashedLine').attr('opacity',1);
@@ -138,6 +136,10 @@ var coords = {
     anholt_windmill_park: [11.174104, 56.597480],
     nysted_windmill_park: [11.698845, 54.575794],
     horns_rev_windmill_park : [7.859741, 55.560579],
-    silkeborg_solar_farm: [9.537419, 56.206914],
-    gaugePlacement: [13.756697,57.270417]
+    silkeborg_solar_farm: [9.337419, 56.206914],
+    gaugePlacement: [13.756697,57.270417],
+	sjaelland_power: [12.465601,55.829442],
+	esbjerg_power: [8.713396,55.793304],
+	studstrup_power: [10.130475, 56.344693],
+	aalborg_power: [10.134089, 57.125391]
 };
